@@ -19,6 +19,7 @@ import { toast } from "react-toastify";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween"; // Import isBetween plugin
 import "./Report.css";
+import reportbg from "../../assets/images/Bg-report.jpg"
 
 // Extend dayjs with isBetween plugin
 dayjs.extend(isBetween);
@@ -309,7 +310,7 @@ const Report = () => {
     <div className="report-page-container">
       <div className="report-header">
         <img
-          src="../src/assets/images/Bg-report.jpg"
+          src={reportbg}
           alt="Report background"
           className="report-header-bg"
         />
