@@ -1,42 +1,45 @@
-import { useEffect } from "react";
-import { Card, Table, Tag, Button, Space } from "antd";
+import React, { useEffect } from "react";
+import { Card, Table, Tag, Button, Space, Typography } from "antd";
 import { WifiOutlined, ReloadOutlined, SettingOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+
 import {
   ActiveSchedulesList,
   PumpControls,
   LightControls,
   DeviceConfigModal
 } from "../../components/DeviceControl";
+
 import { useDeviceControl } from "../../hooks/useDeviceControl";
 import { useSchedules } from "../../hooks/useSchedules";
 import { useDeviceConfig } from "../../hooks/useDeviceConfig";
 
+import './ControlDevice.css'; 
+
+const { Title, Paragraph } = Typography;
+
 const ControlDevice = () => {
   const navigate = useNavigate();
 
-  // Custom hooks
+  // --- State and Logic from Custom Hooks ---
   const {
     loading,
     deviceList,
-    controlStates,
     displayStates,
     deviceLoadingStatus,
     fetchDeviceList,
     handlePumpSpeedChange,
     handleToggleLight,
-    fetchDeviceStatus,
     isDeviceOnline
-  } = useDeviceControl();
+  } = useDeviceControl(); // Handles device fetching, status, and control actions
 
   const {
     schedules,
     schedulesLoading,
-    fetchSchedules,
     fetchAllDeviceSchedules,
     handleToggleSchedule,
     handleDeleteSchedule
-  } = useSchedules();
+  } = useSchedules(); // Handles schedule fetching and management
 
   const {
     selectedDevice,
@@ -47,19 +50,21 @@ const ControlDevice = () => {
     handleAutoModeChange,
     handleScheduleChange,
     handleSaveConfig
-  } = useDeviceConfig();
+  } = useDeviceConfig(); // Handles device configuration modal state and actions
 
-  // Effects
+  // --- Effects ---
+  // Fetch initial data on component mount
   useEffect(() => {
-    // Load initial data
     fetchDeviceList();
     fetchAllDeviceSchedules();
+    // Empty dependency array [] ensures this runs only once on mount.
   }, []);
 
-  // Render functions
+  // --- Render Functions for Device Controls ---
+
+  // Renders controls for water pump devices
   const renderPumpControls = (device) => {
     if (!device || device.deviceType !== 'pump_water') return null;
-
     const isCurrentDevice = selectedDevice && selectedDevice.id === device.id;
     const isAutoMode = isCurrentDevice && deviceConfig.autoMode;
     const isWateringScheduleEnabled = isCurrentDevice && deviceConfig.wateringSchedule?.enabled;
@@ -80,9 +85,9 @@ const ControlDevice = () => {
     );
   };
 
+  // Renders controls for light devices
   const renderLightControls = (device) => {
     if (!device || device.deviceType !== 'light') return null;
-
     const isCurrentDevice = selectedDevice && selectedDevice.id === device.id;
     const isAutoMode = isCurrentDevice && deviceConfig.autoMode;
     const isLightScheduleEnabled = isCurrentDevice && deviceConfig.lightSchedule?.enabled;
@@ -103,116 +108,126 @@ const ControlDevice = () => {
     );
   };
 
+  // Renders the 'Configure' button for a device row
   const renderConfigButton = (device) => (
     <Button
       size="small"
       icon={<SettingOutlined />}
       onClick={() => handleSelectDevice(device)}
     >
-      Cấu hình
+      Configure
     </Button>
   );
 
-  // Table columns configuration
+  // --- Ant Design Table Column Definitions ---
   const columns = [
     {
-      title: 'Mã thiết bị',
+      title: 'Device Code',
       dataIndex: 'deviceCode',
       key: 'deviceCode',
     },
     {
-      title: 'Loại thiết bị',
+      title: 'Device Type',
       dataIndex: 'deviceType',
       key: 'deviceType',
-      render: (type) => {
+      render: (type) => { // Display type with a colored tag
         const config = {
-          'pump_water': { color: 'cyan', text: 'Máy bơm' },
-          'light': { color: 'gold', text: 'Đèn' },
+          'pump_water': { color: 'cyan', text: 'Water Pump' },
+          'light': { color: 'gold', text: 'Light' },
           default: { color: 'default', text: type }
         };
         const { color, text } = config[type] || config.default;
         return <Tag color={color}>{text}</Tag>;
       },
-      filters: [
-        { text: 'Máy bơm', value: 'pump_water' },
-        { text: 'Đèn', value: 'light' }
+      filters: [ // Allow filtering by type
+        { text: 'Water Pump', value: 'pump_water' },
+        { text: 'Light', value: 'light' }
       ],
       onFilter: (value, record) => record.deviceType === value,
     },
     {
-      title: 'Điều khiển',
+      title: 'Controls',
       key: 'controls',
-      render: (_, record) => {
-        if (record.deviceType === 'pump_water') {
-          return renderPumpControls(record);
-        } else if (record.deviceType === 'light') {
-          return renderLightControls(record);
-        }
+      render: (_, record) => { // Render specific controls based on type
+        if (record.deviceType === 'pump_water') return renderPumpControls(record);
+        if (record.deviceType === 'light') return renderLightControls(record);
         return null;
       },
     },
     {
-      title: '',
+      title: 'Actions', // Changed title for clarity
       key: 'action',
       width: 180,
-      render: (_, record) => (
+      render: (_, record) => ( // Render action buttons
         <Space size="small">
           {renderConfigButton(record)}
           <Button
             size="small"
             icon={<InfoCircleOutlined />}
-            onClick={() => navigate(`/dashboard/device/${record.id}`)}
+            onClick={() => navigate(`/dashboard/device/${record.id}`)} // Navigate to details page
           >
-            Chi tiết
+            Details
           </Button>
         </Space>
       ),
     },
   ];
 
+  // --- Component JSX Structure ---
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Điều Khiển Thiết Bị</h1>
-        <p className="text-gray-600">Bật/tắt & cấu hình tự động hóa máy bơm và đèn</p>
+    <div className="control-page-container">
+      {/* Page Header */}
+      <div className="control-header">
+        <img src="..\src\assets\images\Bg-control.jpg" alt="Device Control background" className="control-header-bg"/>
+        <div className="control-header-content">
+          <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>Device Control </Title>
+          <Paragraph style={{ color: 'rgba(255, 255, 255, 0.85)', maxWidth: 600 }}>
+            Manually control your pumps and lights, manage automation schedules, and configure device settings.
+          </Paragraph>
+        </div>
       </div>
 
-      {/* Device list */}
-      <Card title="Điều khiển thiết bị" className="mb-6 shadow-md">
-        <Table
-          dataSource={deviceList}
-          columns={columns}
-          rowKey="id"
-          loading={loading}
-          pagination={{ pageSize: 10 }}
-          locale={{ emptyText: "Không có thiết bị máy bơm hoặc đèn nào" }}
-        />
-      </Card>
+      {/* Page Body Content */}
+      <div className="control-body-content">
+        {/* Device Control Table */}
+        <Card title="Device Controls" className="mb-6 shadow-md">
+          <Table
+            // Only show pumps and lights in this table
+            dataSource={deviceList.filter(d => d.deviceType === 'pump_water' || d.deviceType === 'light')}
+            columns={columns}
+            rowKey="id"
+            loading={loading}
+            pagination={{ pageSize: 10 }}
+            locale={{ emptyText: "No water pumps or lights found" }}
+          />
+        </Card>
 
-      {/* Active schedules */}
-      <Card
-        title="Danh sách lịch trình"
-        className="mb-6 shadow-md"
-      >
-        <ActiveSchedulesList
-          schedules={schedules}
-          onToggle={handleToggleSchedule}
-          onDelete={handleDeleteSchedule}
-        />
-      </Card>
+        {/* Active Schedules List */}
+        <Card
+          title="Active Schedules List"
+          className="mb-6 shadow-md"
+          loading={schedulesLoading}
+        >
+          <ActiveSchedulesList
+            schedules={schedules}
+            onToggle={handleToggleSchedule}
+            onDelete={handleDeleteSchedule}
+          />
+        </Card>
 
-      {/* Device configuration modal */}
-      {selectedDevice && (
-        <DeviceConfigModal
-          device={selectedDevice}
-          config={deviceConfig}
-          onClose={handleCloseConfig}
-          onAutoModeChange={handleAutoModeChange}
-          onScheduleChange={handleScheduleChange}
-          onSave={handleSaveConfig}
-          saving={savingConfig}
-        />
-      )}
+        {/* Device Configuration Modal (conditional rendering) */}
+        {selectedDevice && (
+          <DeviceConfigModal
+            device={selectedDevice}
+            config={deviceConfig}
+            onClose={handleCloseConfig}
+            onAutoModeChange={handleAutoModeChange}
+            onScheduleChange={handleScheduleChange}
+            onSave={handleSaveConfig}
+            saving={savingConfig}
+          />
+        )}
+      </div>
     </div>
   );
 };

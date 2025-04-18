@@ -89,7 +89,7 @@ function App() {
         />
 
         <Route
-          path="/device-setting"
+          path="/device-management"
           element={
             <ProtectedRoute>
               {adminUser ? <Navigate to="/admin/users" /> : (
@@ -115,7 +115,7 @@ function App() {
         />
 
         <Route
-          path="/config"
+          path="/sensor-configuration"
           element={
             <ProtectedRoute>
               {adminUser ? <Navigate to="/admin/users" /> : (
@@ -141,7 +141,7 @@ function App() {
         />
 
         <Route
-          path="/control"
+          path="/control-device"
           element={
             <ProtectedRoute>
               {adminUser ? <Navigate to="/admin/users" /> : (

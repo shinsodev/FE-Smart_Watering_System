@@ -13,6 +13,8 @@ import Icon3Dots from "../../assets/images/icon-3dots.svg";
 import IconChart from "../../assets/images/icon-chart.svg";
 import IconDecrease from "../../assets/images/icon-decrease.svg";
 
+import './Dashboard.css'
+
 // Giá trị ngưỡng mặc định nếu không thể tải từ API
 // const DEFAULT_THRESHOLD = {
 //   SOIL_MOISTURE: { min: 20, max: 80 },
@@ -411,7 +413,8 @@ const Dashboard = () => {
       {/* Sensor Data cards - hiển thị cho tất cả người dùng đã đăng nhập */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Soil Moisture  */}
-        <div className={`w-full h-[170px] bg-gradient-to-b from-[#0093E9] to-[#80D0C7] rounded relative ${soilMoistureThresholdClass}`}>
+        <div className={`w-full h-[170px] bg-gradient-to-b from-[#0093E9] to-[#80D0C7] rounded relative ${soilMoistureThresholdClass}`}
+          style={{ animation: 'simpleFadeIn 0.5s ease-out' }}>
           <div className="p-[12px]">
             <div className="font-poppins text-[14px] font-semibold flex justify-between items-center">
               <div>
@@ -443,7 +446,8 @@ const Dashboard = () => {
         </div>
 
         {/* Temperature  */}
-        <div className={`w-full h-[170px] bg-gradient-to-b from-[#FF55AACD] to-[#FBDA61] rounded relative ${temperatureThresholdClass}`}>
+        <div className={`w-full h-[170px] bg-gradient-to-b from-[#FF55AACD] to-[#FBDA61] rounded relative ${temperatureThresholdClass}`}
+          style={{ animation: 'simpleFadeIn 0.5s ease-out' }}>
           <div className="p-[12px]">
             <div className="font-poppins text-[14px] font-semibold flex justify-between items-center">
               <div>
@@ -475,7 +479,8 @@ const Dashboard = () => {
         </div>
 
         {/* Air Humidity  */}
-        <div className={`w-full h-[170px] bg-gradient-to-b from-[#64E39E] to-[#53ECE5] rounded relative ${airHumidityThresholdClass}`}>
+        <div className={`w-full h-[170px] bg-gradient-to-b from-[#64E39E] to-[#53ECE5] rounded relative ${airHumidityThresholdClass}`}
+          style={{ animation: 'simpleFadeIn 0.5s ease-out' }}>
           <div className="p-[12px]">
             <div className="font-poppins text-[14px] font-semibold flex justify-between items-center">
               <div>
@@ -507,7 +512,8 @@ const Dashboard = () => {
         </div>
 
         {/* Pump Water  */}
-        <div className={`w-full h-[170px] bg-gradient-to-b from-[#8E7AFF] to-[#A682FF] rounded relative ${pumpSpeedThresholdClass}`}>
+        <div className={`w-full h-[170px] bg-gradient-to-b from-[#8E7AFF] to-[#A682FF] rounded relative ${pumpSpeedThresholdClass}`}
+          style={{ animation: 'simpleFadeIn 0.5s ease-out' }}>
           <div className="p-[12px]">
             <div className="font-poppins text-[14px] font-semibold flex justify-between items-center">
               <div>
@@ -541,7 +547,8 @@ const Dashboard = () => {
         </div>
 
         {/* Light Device  */}
-        <div className="w-full h-[170px] bg-gradient-to-b from-[#FF6B6B] to-[#FF8E53] rounded relative">
+        <div className="w-full h-[170px] bg-gradient-to-b from-[#FF6B6B] to-[#FF8E53] rounded relative"
+          style={{ animation: 'simpleFadeIn 0.5s ease-out' }}>
           <div className="p-[12px]">
             <div className="font-poppins text-[14px] font-semibold flex justify-between items-center">
               <div>

@@ -1,0 +1,76 @@
+/* Keyframes */
+@keyframes fadeInSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Container tổng thể */
+  .report-page-container {
+    background-color: #f0f2f5;
+    min-height: calc(100vh - 64px);
+    padding-bottom: 24px;
+  }
+  
+  /* Header trang */
+  .report-header {
+    position: relative;
+    height: 200px; /* Điều chỉnh chiều cao nếu cần */
+    margin-bottom: 24px; /* Khoảng cách với content bên dưới */
+    overflow: hidden;
+  }
+  
+  .report-header-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+  }
+  
+  .report-header-content {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0 40px;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.2));
+  }
+  
+  /* Phần thân nội dung chính */
+  .report-body-content {
+    margin: 0 auto 24px auto; /* Căn giữa ngang, cách đáy */
+    /* Bỏ margin âm nếu không muốn overlap */
+    max-width: 1200px; /* Tăng max-width cho biểu đồ */
+    padding: 24px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+    animation: fadeInSlideUp 0.7s ease-out forwards;
+  }
+  
+  /* Tùy chỉnh Card và Chart */
+  .report-body-content .ant-card {
+    box-shadow: none;
+    border: 1px solid #f0f0f0;
+  }
+  .report-body-content .ant-card + .ant-card {
+    margin-top: 24px;
+  }
+  
+  /* Đảm bảo chart chiếm đủ không gian */
+  .chart-container {
+    position: relative;
+    /* height: 500px; - Có thể không cần set cứng ở đây */
+    width: 100%;
+  }
