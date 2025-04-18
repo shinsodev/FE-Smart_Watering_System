@@ -15,6 +15,7 @@ import { useSchedules } from "../../hooks/useSchedules";
 import { useDeviceConfig } from "../../hooks/useDeviceConfig";
 
 import './ControlDevice.css'; 
+import controlbg from "../src/assets/images/Bg-control.jpg"
 
 const { Title, Paragraph } = Typography;
 
@@ -178,7 +179,7 @@ const ControlDevice = () => {
     <div className="control-page-container">
       {/* Page Header */}
       <div className="control-header">
-        <img src="..\src\assets\images\Bg-control.jpg" alt="Device Control background" className="control-header-bg"/>
+        <img src={controlbg} alt="Device Control background" className="control-header-bg"/>
         <div className="control-header-content">
           <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>Device Control </Title>
           <Paragraph style={{ color: 'rgba(255, 255, 255, 0.85)', maxWidth: 600 }}>

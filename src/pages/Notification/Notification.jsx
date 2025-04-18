@@ -9,6 +9,7 @@ import API_ENDPOINTS from "../../services/ApiEndpoints";
 import { toast } from "react-toastify";
 import moment from 'moment';
 import './Notification.css';
+import Noficationbg from "../src/assets/images/Bg.jpg"
 
 const { Title, Paragraph, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -299,7 +300,7 @@ const Notification = () => {
     return (
         <div className="notification-page-container">
             <div className="notification-header">
-                <img src="..\src\assets\images\Bg.jpg" alt="Notification background" className="notification-header-bg"/>
+                <img src={Noficationbg} alt="Notification background" className="notification-header-bg"/>
                 <div className="notification-header-content">
                     <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>Notifications History</Title>
                     <Paragraph style={{ color: 'rgba(255, 255, 255, 0.85)', maxWidth: 600 }}>
