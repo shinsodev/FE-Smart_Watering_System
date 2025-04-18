@@ -8,12 +8,10 @@ import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
 import { Typography } from 'antd'; // Import Typography
 
-// Component con (Giả sử bạn giữ chúng)
+// Component con 
 import SliderCard from "../../components/SliderCard/SliderCard";
-// import ToggleCard from "../../components/ToggleCard/ToggleCard"; // Bỏ nếu không dùng
-
 import './ConfigDevice.css'; // Import file CSS mới
-
+import configbg from "../../assets/images/Bg-config.jpg"
 const { Title, Paragraph } = Typography; // Sử dụng Title, Paragraph từ Typography
 
 const ConfigDevice = () => {
@@ -144,7 +142,7 @@ const ConfigDevice = () => {
         <div className="config-page-container">
             <div className="config-header">
                 {/* Thay đổi ảnh nền nếu cần */}
-                <img src="..\src\assets\images\Bg-config.jpg" alt="Configuration background" className="config-header-bg"/>
+                <img src={configbg} alt="Configuration background" className="config-header-bg"/>
                 <div className="config-header-content">
                     {/* Thay đổi Title và Paragraph cho phù hợp */}
                     <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>Sensor Configuration</Title>

@@ -12,6 +12,8 @@ import axiosInstance from "../../services/CustomizeAxios";
 import DeviceServices from "../../services/DeviceServices";
 import { useAuth } from "../../context/AuthContext";
 import './DeviceSetting.css';
+import bgDevice from '../../assets/images/Bg-device.jpg';
+
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -319,7 +321,7 @@ const DeviceSetting = () => {
 
             <div className="devicesetting-header">
                 <img
-                    src="../src/assets/images/Bg-device.jpg"
+                    src={bgDevice}
                     alt="Device Management background"
                     className="devicesetting-header-bg"
                 />

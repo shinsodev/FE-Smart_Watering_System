@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import UserServices from "../../services/UserServices";
 
 import './ProfileSettings.css'; // Import CSS
-
+import profilebg from "../../assets/images/avt.jpeg"
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs; // Keep TabPane as per original logic
 
@@ -85,7 +85,7 @@ const ProfileSettings = () => {
     return (
         <div className="profile-page-container">
             <div className="profile-header">
-                <img src="..\src\assets\images\avt.jpeg" alt="Profile background" className="profile-header-bg"/> {/* Update image path */}
+                <img src={profilebg} alt="Profile background" className="profile-header-bg"/> {/* Update image path */}
                 <div className="profile-header-content">
                     {/* English Title and Paragraph */}
                     <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>Account Settings</Title>
