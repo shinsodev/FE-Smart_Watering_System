@@ -9,7 +9,7 @@ import API_ENDPOINTS from "../../services/ApiEndpoints";
 import { toast } from "react-toastify";
 import moment from 'moment';
 import './Notification.css';
-import Noficationbg from "../src/assets/images/Bg.jpg"
+import Noficationbg from "../../assets/images/Bg.jpg"
 
 const { Title, Paragraph, Text } = Typography;
 const { RangePicker } = DatePicker;

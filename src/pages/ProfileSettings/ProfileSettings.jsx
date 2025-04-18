@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import UserServices from "../../services/UserServices";
 
 import './ProfileSettings.css'; // Import CSS
-import profilebg from "../src/assets/images/avt.jpeg"
+import profilebg from "../../assets/images/avt.jpeg"
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs; // Keep TabPane as per original logic
 

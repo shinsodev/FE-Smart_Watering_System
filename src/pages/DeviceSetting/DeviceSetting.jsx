@@ -12,7 +12,7 @@ import axiosInstance from "../../services/CustomizeAxios";
 import DeviceServices from "../../services/DeviceServices";
 import { useAuth } from "../../context/AuthContext";
 import './DeviceSetting.css';
-import bgDevice from '../src/assets/images/Bg-device.jpg';
+import bgDevice from '../../assets/images/Bg-device.jpg';
 
 
 const { Option } = Select;

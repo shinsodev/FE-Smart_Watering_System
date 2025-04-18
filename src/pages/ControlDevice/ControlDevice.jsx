@@ -15,7 +15,7 @@ import { useSchedules } from "../../hooks/useSchedules";
 import { useDeviceConfig } from "../../hooks/useDeviceConfig";
 
 import './ControlDevice.css'; 
-import controlbg from "../src/assets/images/Bg-control.jpg"
+import controlbg from "../../assets/images/Bg-control.jpg"
 
 const { Title, Paragraph } = Typography;
 
