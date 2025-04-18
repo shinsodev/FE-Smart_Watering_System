@@ -1,0 +1,124 @@
+/* Keyframes giữ nguyên */
+@keyframes fadeInSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Container tổng thể giữ nguyên */
+  .profile-page-container {
+    background-color: #f0f2f5;
+    min-height: calc(100vh - 64px);
+    padding-bottom: 24px;
+  }
+  
+  /* Header trang giữ nguyên */
+  .profile-header {
+    position: relative;
+    height: 200px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  
+  .profile-header-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+  }
+  
+  .profile-header-content {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0 40px;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.2));
+  }
+  
+  /* Phần thân nội dung chính giữ nguyên */
+  .profile-body-content {
+    margin: 0 auto 24px auto;
+    max-width: 900px;
+    padding: 0;
+    background-color: transparent;
+    border-radius: 8px;
+    animation: fadeInSlideUp 0.7s ease-out forwards;
+  }
+  
+  /* --- Điều chỉnh CSS cho Tabs và Card bên trong --- */
+  
+  /* Style cho toàn bộ khối Tabs */
+  .profile-body-content .profile-tabs.ant-tabs-card > .ant-tabs-nav {
+    margin-bottom: 0; /* Bỏ margin dưới của thanh điều hướng tab */
+    background-color: #fafafa; /* Có thể thêm màu nền nhẹ cho thanh nav */
+    border-bottom: 1px solid #f0f0f0; /* Thêm border dưới nhẹ nhàng cho thanh nav */
+  }
+  
+  .profile-body-content .profile-tabs.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab {
+     /* Style cho từng tab không được chọn */
+     border: none; /* Bỏ border mặc định của tab */
+     background: transparent; /* Nền trong suốt */
+     border-bottom: 1px solid #f0f0f0; /* Giữ border dưới nhẹ */
+     border-radius: 4px 4px 0 0; /* Bo góc trên nhẹ */
+     margin-right: 2px; /* Khoảng cách giữa các tab */
+     padding: 8px 16px; /* Điều chỉnh padding */
+  }
+  
+  .profile-body-content .profile-tabs.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active {
+    /* Style cho tab đang được chọn */
+    border: 1px solid #f0f0f0; /* Border bao quanh */
+    border-bottom-color: #fff; /* Quan trọng: làm border dưới trùng màu nền nội dung */
+    background: #fff; /* Nền trắng */
+    color: #1677ff; /* Màu chữ active (màu primary của antd) */
+    font-weight: 500;
+  }
+  
+  /* Style cho phần nội dung của tab */
+  .profile-body-content .profile-tabs .ant-tabs-content-holder {
+      background-color: #fff; /* Đảm bảo nền trắng */
+      border: 1px solid #f0f0f0; /* Border bao quanh content */
+      border-top: none; /* Bỏ border trên vì đã có border dưới của nav */
+      border-radius: 0 0 8px 8px; /* Bo góc dưới */
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09); /* Đổ bóng */
+  }
+  
+  .profile-body-content .profile-tabs .ant-tabs-tabpane {
+      padding: 24px; /* Padding cho nội dung bên trong tab */
+  }
+  
+  /* Style cho Card bên trong tab */
+  .profile-body-content .ant-tabs-tabpane .ant-card {
+    box-shadow: none; 
+    border: none; 
+  }
+  .profile-body-content .ant-tabs-tabpane .ant-card-head {
+      border-bottom: none;
+      font-size: 1rem;
+      padding: 0;
+      min-height: auto; 
+      margin-bottom: 16px; 
+  }
+  .profile-body-content .ant-tabs-tabpane .ant-card-head-title {
+      padding: 0; 
+  }
+  .profile-body-content .ant-tabs-tabpane .ant-card-body {
+      padding: 0; 
+  }
+  
+  /* Style cho Divider trong tab Account Info nếu cần */
+  .profile-body-content .account-info-divider {
+      margin: 12px 0; 
+      border-color: #f0f0f0;
+  }

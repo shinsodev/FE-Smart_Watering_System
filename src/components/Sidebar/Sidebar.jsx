@@ -54,7 +54,7 @@ const Sidebar = () => {
                   <div>Dashboard</div>
                 </NavLink>
                 <NavLink
-                  to="/device-setting"
+                  to="/device-management"
                   className={({ isActive }) => getNavLinkClass(isActive)}
                 >
                   <img
@@ -62,7 +62,7 @@ const Sidebar = () => {
                     alt="icon setting"
                     className="w-[18px] h-[23px] object-cover"
                   />
-                  <div>Device Setting</div>
+                  <div>Device Management</div>
                 </NavLink>
                 <NavLink
                   to="/notification"
@@ -76,7 +76,7 @@ const Sidebar = () => {
                   <div>Notification</div>
                 </NavLink>
                 <NavLink
-                  to="/config"
+                  to="/sensor-configuration"
                   className={({ isActive }) => getNavLinkClass(isActive)}
                 >
                   <img
@@ -84,10 +84,10 @@ const Sidebar = () => {
                     alt="icon config"
                     className="w-[23px] h-[23px] object-cover"
                   />
-                  <div>Configure Devices</div>
+                  <div>Sensor Configuration</div>
                 </NavLink>
                 <NavLink
-                  to="/control"
+                  to="/control-device"
                   className={({ isActive }) => getNavLinkClass(isActive)}
                 >
                   <MdControlCamera className="text-xl" />
