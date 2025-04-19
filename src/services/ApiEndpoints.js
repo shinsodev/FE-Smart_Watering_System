@@ -1,9 +1,9 @@
 // API base URL
-const API_BASE_URL = 'http://localhost:3000';
-// const API_BASE_URL = import.meta.env.VITE_API_URL;
+// const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Ghi log thông tin URL để kiểm tra
-console.log('API Base URL được sử dụng:', API_BASE_URL);
+console.log("API Base URL được sử dụng:", API_BASE_URL);
 
 // API Endpoints
 const API_ENDPOINTS = {
@@ -57,19 +57,21 @@ const API_ENDPOINTS = {
   SCHEDULES: {
     GET_ALL: `${API_BASE_URL}/api/schedules`,
     GET_BY_ID: (id) => `${API_BASE_URL}/api/schedules/${id}`,
-    GET_BY_DEVICE: (deviceId) => `${API_BASE_URL}/api/schedules/device/${deviceId}`,
+    GET_BY_DEVICE: (deviceId) =>
+      `${API_BASE_URL}/api/schedules/device/${deviceId}`,
     CREATE: `${API_BASE_URL}/api/schedules`,
     UPDATE: (id) => `${API_BASE_URL}/api/schedules/${id}`,
     DELETE: (id) => `${API_BASE_URL}/api/schedules/${id}`,
     TOGGLE: (id) => `${API_BASE_URL}/api/schedules/${id}/toggle`,
-    SET_ENABLED: (id, enabled) => `${API_BASE_URL}/api/schedules/${id}/set-enabled?enabled=${enabled}`,
+    SET_ENABLED: (id, enabled) =>
+      `${API_BASE_URL}/api/schedules/${id}/set-enabled?enabled=${enabled}`,
   },
   ADMIN: {
     DASHBOARD: `${API_BASE_URL}/api/admin/dashboard`,
     GET_ALL_USERS: `${API_BASE_URL}/api/admin/users`,
     GET_ALL_DEVICES: `${API_BASE_URL}/api/admin/devices`,
     SYSTEM_STATS: `${API_BASE_URL}/api/admin/stats`,
-  }
+  },
 };
 
 export { API_ENDPOINTS };
