@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Select, message, Tag, Space, Spin } from 'antd';
-import { DeleteOutlined, EditOutlined, PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Table, Button, Modal, Form, Input, Select, message, Tag, Space, Spin, Divider, Row, Col } from 'antd';
+import { DeleteOutlined, EditOutlined, PlusOutlined, ExclamationCircleOutlined, SyncOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -8,9 +8,9 @@ import {
   createDevice, 
   updateDevice, 
   deleteDevice, 
-  getAdminProfile,
-  getAllSystemUsers
+  getAdminProfile
 } from '../../services/AdminServices';
+import DeviceServices from '../../services/DeviceServices'; // Import DeviceServices for activation
 
 const { Option } = Select;
 const { confirm } = Modal;
@@ -24,7 +24,6 @@ const deviceTypes = [
 
 const DeviceManagement = () => {
   const [devices, setDevices] = useState([]);
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deviceModalVisible, setDeviceModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState('create'); // 'create' or 'edit'
@@ -90,23 +89,6 @@ const DeviceManagement = () => {
         console.error('Failed to fetch devices:', devicesResponse);
         message.error(devicesResponse?.message || 'Failed to fetch devices');
       }
-      
-      // Fetch users
-      const usersResponse = await getAllSystemUsers();
-      if (usersResponse?.success) {
-        // Filter out admins and only include accepted users
-        const userData = usersResponse.data || [];
-        const filteredUsers = userData.filter(user => 
-          user && user.isAccepted && 
-          !user.isAdmin && 
-          user.role !== 'ADMIN' && 
-          user.userType !== 'admin'
-        );
-        setUsers(filteredUsers);
-      } else {
-        console.error('Failed to fetch users:', usersResponse);
-        message.error(usersResponse?.message || 'Failed to fetch users');
-      }
     } catch (error) {
       console.error('Error fetching data:', error);
       handleAuthError(error);
@@ -132,19 +114,26 @@ const DeviceManagement = () => {
     setSelectedDevice(device);
     setModalMode('edit');
     
-    // Find the user associated with this device based on configuration
-    let userForDevice = null;
-    if (device.userId && Array.isArray(users)) {
-      userForDevice = users.find(u => u && u.id === device.userId);
-    }
-      
-    deviceForm.setFieldsValue({
+    // Create form values with basic device info
+    const formValues = {
       deviceCode: device.deviceCode || '',
-      deviceName: device.deviceName || '',
       deviceType: device.deviceType || '',
-      userId: device.userId || (userForDevice ? userForDevice.id : undefined)
-    });
+      description: device.description || ''
+    };
     
+    // Add feed data if available
+    if (device.feed && Array.isArray(device.feed) && device.feed.length > 0) {
+      formValues.feeds = device.feed.map(feed => ({
+        name: feed.name,
+        feedKey: feed.feedKey,
+        id: feed.id
+      }));
+    } else {
+      // Initialize with empty feed if no feeds exist
+      formValues.feeds = [{}];
+    }
+    
+    deviceForm.setFieldsValue(formValues);
     setDeviceModalVisible(true);
   };
 
@@ -165,8 +154,43 @@ const DeviceManagement = () => {
       // Create a copy of values
       const deviceData = { ...values };
       
+      // Validate feeds array
+      if (!deviceData.feeds || !Array.isArray(deviceData.feeds) || deviceData.feeds.length === 0) {
+        message.error("At least one feed is required");
+        setLoading(false);
+        return;
+      }
+      
+      // Validate each feed has name and feedKey
+      const invalidFeeds = deviceData.feeds.filter(feed => !feed.name || !feed.feedKey);
+      if (invalidFeeds.length > 0) {
+        message.error("Each feed must have a name and feed key");
+        setLoading(false);
+        return;
+      }
+      
       if (modalMode === 'create') {
         response = await createDevice(deviceData);
+        
+        // If device was created successfully, activate it
+        if (response?.success && response?.data?.device?.id) {
+          message.loading("Activating device...", 2);
+          const deviceId = response.data.device.id;
+          
+          setTimeout(async () => {
+            try {
+              const activationResult = await DeviceServices.activateDevice(deviceId);
+              if (activationResult.success) {
+                message.success("Device activated successfully");
+              } else {
+                message.warning("Device created but activation failed. Please activate manually.");
+              }
+            } catch (activationError) {
+              console.error("Error activating device:", activationError);
+              message.warning("Device created but activation failed. Please activate manually.");
+            }
+          }, 2000); // Delay activation to ensure device is saved in DB
+        }
       } else if (selectedDevice && selectedDevice.id) {
         response = await updateDevice(selectedDevice.id, deviceData);
       } else {
@@ -222,6 +246,28 @@ const DeviceManagement = () => {
     });
   };
 
+  // Function to handle device activation
+  const handleActivateDevice = async (deviceId) => {
+    try {
+      setLoading(true);
+      message.loading("Activating device...", 2);
+      
+      const activationResult = await DeviceServices.activateDevice(deviceId);
+      
+      if (activationResult.success) {
+        message.success("Device activated successfully");
+        fetchData(); // Refresh the device list
+      } else {
+        message.error(activationResult.message || "Failed to activate device");
+      }
+    } catch (error) {
+      console.error('Error activating device:', error);
+      handleAuthError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Columns for the devices table
   const deviceColumns = [
     {
@@ -231,13 +277,7 @@ const DeviceManagement = () => {
       render: text => text || 'N/A'
     },
     {
-      title: 'Device Name',
-      dataIndex: 'deviceName',
-      key: 'deviceName',
-      render: text => text || 'N/A'
-    },
-    {
-      title: 'Type',
+      title: 'Device Type',
       dataIndex: 'deviceType',
       key: 'deviceType',
       render: (type) => {
@@ -247,14 +287,10 @@ const DeviceManagement = () => {
       }
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (_, record) => (
-        <Tag color={isDeviceOnline(record) ? 'green' : 'red'}>
-          {isDeviceOnline(record) ? 'Online' : 'Offline'}
-        </Tag>
-      )
+      title: 'Description',
+      dataIndex: 'description',
+      key: 'description',
+      render: text => text || 'N/A'
     },
     {
       title: 'Actions',
@@ -277,6 +313,13 @@ const DeviceManagement = () => {
           >
             Delete
           </Button>
+          <Button
+            icon={<SyncOutlined />}
+            onClick={() => handleActivateDevice(record?.id)}
+            disabled={!record || !record.id}
+          >
+            Activate
+          </Button>
         </Space>
       )
     }
@@ -285,21 +328,6 @@ const DeviceManagement = () => {
   // Kiểm tra key duy nhất cho mỗi record trước khi render
   const getDeviceKey = (device) => {
     return device && device.id ? `device-${device.id}` : `device-${Math.random()}`;
-  };
-
-  // Kiểm tra xem thiết bị có trực tuyến không dựa trên dữ liệu gần nhất
-  const isDeviceOnline = (device) => {
-    if (!device) return false;
-    
-    // Kiểm tra thời gian dữ liệu gần nhất
-    const lastDataTime = device.lastDataTime ? new Date(device.lastDataTime) : null;
-    if (!lastDataTime) return false;
-    
-    // Thiết bị được coi là trực tuyến nếu có dữ liệu trong vòng 5 phút
-    const fiveMinutesAgo = new Date();
-    fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
-    
-    return lastDataTime > fiveMinutesAgo;
   };
 
   return (
@@ -372,14 +400,6 @@ const DeviceManagement = () => {
           </Form.Item>
           
           <Form.Item
-            name="deviceName"
-            label="Device Name"
-            rules={[{ required: true, message: 'Please enter the device name' }]}
-          >
-            <Input placeholder="Enter device name" />
-          </Form.Item>
-          
-          <Form.Item
             name="deviceType"
             label="Device Type"
             rules={[{ required: true, message: 'Please select the device type' }]}
@@ -391,6 +411,65 @@ const DeviceManagement = () => {
             </Select>
           </Form.Item>
           
+          <Form.Item
+            name="description"
+            label="Description"
+          >
+            <Input.TextArea placeholder="Enter device description" />
+          </Form.Item>
+
+          <Divider orientation="left">Feed Information</Divider>
+          <Form.List name="feeds" initialValue={[{}]}>
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <div key={key} style={{ marginBottom: 20 }}>
+                    <Row gutter={16}>
+                      <Col span={11}>
+                        <Form.Item
+                          {...restField}
+                          name={[name, "name"]}
+                          label="Feed Name"
+                          rules={[{ required: true, message: "Please enter feed name" }]}
+                        >
+                          <Input placeholder="Enter feed name" />
+                        </Form.Item>
+                      </Col>
+                      <Col span={11}>
+                        <Form.Item
+                          {...restField}
+                          name={[name, "feedKey"]}
+                          label="Feed Key"
+                          rules={[{ required: true, message: "Please enter feed key" }]}
+                        >
+                          <Input placeholder="Enter feed key" />
+                        </Form.Item>
+                      </Col>
+                      <Col span={2} style={{ display: 'flex', alignItems: 'center', marginTop: 30 }}>
+                        {fields.length > 1 && (
+                          <DeleteOutlined 
+                            style={{ color: '#ff4d4f' }}
+                            onClick={() => remove(name)}
+                          />
+                        )}
+                      </Col>
+                    </Row>
+                    {fields.length > 1 && <Divider dashed />}
+                  </div>
+                ))}
+                <Form.Item>
+                  <Button
+                    type="dashed"
+                    onClick={() => add()}
+                    block
+                    icon={<PlusOutlined />}
+                  >
+                    Add Feed
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
         </Form>
       </Modal>
     </div>

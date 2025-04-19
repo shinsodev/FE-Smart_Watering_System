@@ -1,380 +1,344 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Table, Input, Typography, Space, Tag, Button, Row, Col, Dropdown, Menu, DatePicker, Spin, Tooltip, Empty } from "antd"; // Đã thêm Empty
-import {
-    ExclamationCircleOutlined, CheckCircleOutlined, InfoCircleOutlined, ToolOutlined,
-    ApiOutlined, SearchOutlined, ClockCircleOutlined, UnorderedListOutlined, DownOutlined
-} from "@ant-design/icons"; // Bỏ BellOutlined, FilterOutlined nếu không dùng
+import { useState, useEffect } from "react";
+import { Empty, Table, Tag, Spin, Button, Tooltip, Space, Typography } from "antd";
+import { BellOutlined, ExclamationCircleOutlined, CheckCircleOutlined, InfoCircleOutlined, ToolOutlined, ApiOutlined } from "@ant-design/icons";
 import axios from "axios";
 import API_ENDPOINTS from "../../services/ApiEndpoints";
 import { toast } from "react-toastify";
-import moment from 'moment';
-import './Notification.css';
-import Noficationbg from "../../assets/images/Bg.jpg"
 
-const { Title, Paragraph, Text } = Typography;
-const { RangePicker } = DatePicker;
+const { Text } = Typography;
 
 const Notification = () => {
-    const [notifications, setNotifications] = useState([]); // Dữ liệu gốc từ API
-    const [displayNotifications, setDisplayNotifications] = useState([]); // Dữ liệu đã lọc để hiển thị
-    const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState(null);
 
-    // State cho các bộ lọc UI
-    const [searchText, setSearchText] = useState('');
-    const [timeFilter, setTimeFilter] = useState('all'); // 'all', 'yesterday', 'last7days', 'custom'
-    const [typeFilter, setTypeFilter] = useState('all'); // 'all', 'THRESHOLD', 'CONNECTION', ...
-    const [customDateRange, setCustomDateRange] = useState(null); // [moment, moment] or null
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
-    // Fetch dữ liệu gốc khi component mount
-    useEffect(() => {
-        fetchNotifications();
-    }, []);
+  const fetchNotifications = async (filters = null) => {
+    try {
+      setLoading(true);
+      
+      // Log the filter being applied for debugging
+      console.log("Applying filters:", filters);
+      
+      // Lấy tất cả thông báo không phân trang
+      const response = await axios.get(
+        `${API_ENDPOINTS.NOTIFICATIONS.GET_ALL}?limit=1000`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
-    // Fetch dữ liệu từ API
-    const fetchNotifications = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get(
-                `${API_ENDPOINTS.NOTIFICATIONS.GET_ALL}?limit=1000`, // Lấy nhiều để lọc client-side
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                }
-            );
-            if (response.data && response.data.success) {
-                setNotifications(response.data.data || []);
-            } else {
-                throw new Error(response.data?.message || "Cannot load notifications");
+      if (response.data && response.data.success) {
+        let filteredData = response.data.data || [];
+        
+        console.log("Data before filtering:", filteredData);
+        
+        // Áp dụng bộ lọc ở phía client nếu có
+        if (filters && filters.type && filters.type.length > 0) {
+          filteredData = filteredData.filter(notification => {
+            // Xử lý trường hợp đặc biệt cho "Khác"
+            if (filters.type.includes('OTHER')) {
+              if (!notification.type || notification.type.trim() === '') {
+                return true;
+              }
             }
-        } catch (error) {
-            console.error("Error fetching notifications:", error);
-            toast.error("Cannot load notifications: " + (error.response?.data?.message || error.message));
-            setNotifications([]);
-        } finally {
-            setLoading(false);
+            
+            // Xử lý trường hợp type là null hoặc undefined
+            if (!notification.type) return false;
+            
+            // Trim whitespace and convert to uppercase for case-insensitive comparison
+            const normalizedType = notification.type.trim().toUpperCase();
+            return filters.type.some(filter => filter.toUpperCase() === normalizedType);
+          });
         }
-    };
+        
+        console.log("Data after filtering:", filteredData);
+        
+        setNotifications(filteredData);
+      } else {
+        setNotifications([]);
+        throw new Error(response.data?.message || "Không thể tải thông báo");
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      toast.error("Không thể tải thông báo: " + (error.response?.data?.message || error.message));
+      setNotifications([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Tính toán các loại notification duy nhất để hiển thị trong bộ lọc
-    const uniqueEventTypes = useMemo(() => {
-        if (!notifications) return ['all'];
-        const types = notifications.map(item => item.type || 'UNKNOWN');
-        return ['all', ...new Set(types)];
-    }, [notifications]);
+  const handleTableChange = (pagination, filters, sorter) => {
+    console.log("Table changed:", { pagination, filters, sorter });
+    setFilters(filters);
+    fetchNotifications(filters);
+  };
 
-    // Effect này chạy mỗi khi bộ lọc hoặc dữ liệu gốc thay đổi để cập nhật danh sách hiển thị
-    useEffect(() => {
-        if (!notifications) return;
+  // Get icon for notification type
+  const getTypeIcon = (type) => {
+    switch (type?.toUpperCase()) {
+      case 'THRESHOLD':
+        return <ExclamationCircleOutlined style={{ color: '#f5222d' }} />;
+      case 'CONNECTION':
+        return <ApiOutlined style={{ color: '#1890ff' }} />;
+      case 'PUMP':
+        return <ToolOutlined style={{ color: '#52c41a' }} />;
+      case 'USER_ACTION':
+        return <CheckCircleOutlined style={{ color: '#722ed1' }} />;
+      case 'AUTOMATION':
+        return <ToolOutlined style={{ color: '#fa8c16' }} />;
+      default:
+        return <InfoCircleOutlined style={{ color: '#1890ff' }} />;
+    }
+  };
 
-        let dataAfterFilter = [...notifications];
+  // Get tag color for notification type
+  const getTypeColor = (type) => {
+    switch (type?.toUpperCase()) {
+      case 'THRESHOLD':
+        return 'error';
+      case 'CONNECTION':
+        return 'processing';
+      case 'PUMP':
+        return 'success';
+      case 'USER_ACTION':
+        return 'purple';
+      case 'AUTOMATION':
+        return 'warning';
+      default:
+        return 'default';
+    }
+  };
 
-        // 1. Lọc theo Search Text (tìm kiếm trên tất cả các trường)
-        if (searchText) {
-            const lowerCaseValue = searchText.toLowerCase();
-            dataAfterFilter = dataAfterFilter.filter(item =>
-                Object.values(item).some(val =>
-                    String(val).toLowerCase().includes(lowerCaseValue)
-                )
+  // Define table columns
+  const columns = [
+    {
+      title: 'Loại',
+      dataIndex: 'type',
+      key: 'type',
+      width: 150,
+      render: (type) => (
+        <Tag icon={getTypeIcon(type)} color={getTypeColor(type)}>
+          {type || 'Khác'}
+        </Tag>
+      ),
+      filters: [
+        { text: 'THRESHOLD', value: 'THRESHOLD' },
+        { text: 'CONNECTION', value: 'CONNECTION' },
+        { text: 'PUMP', value: 'PUMP' },
+        { text: 'USER_ACTION', value: 'USER_ACTION' },
+        { text: 'AUTOMATION', value: 'AUTOMATION' },
+        { text: 'Khác', value: 'OTHER' },
+      ],
+      filteredValue: filters?.type || null,
+      onFilter: (value, record) => {
+        // Trường hợp đặc biệt cho 'Khác'
+        if (value === 'OTHER') {
+          return !record.type || record.type.trim() === '';
+        }
+        
+        // Xử lý trường hợp type là null hoặc undefined
+        if (!record.type) return false;
+        
+        // Trim whitespace and convert to uppercase for case-insensitive comparison
+        const normalizedType = record.type.trim().toUpperCase();
+        return value.toUpperCase() === normalizedType;
+      },
+    },
+    {
+      title: 'Nội dung',
+      dataIndex: 'message',
+      key: 'message',
+      render: (text) => <Text>{text}</Text>,
+    },
+    {
+      title: 'Thiết bị',
+      dataIndex: 'source',
+      key: 'source',
+      width: 150,
+      render: (source, record) => (
+        <span>{source || (record.iotdevice?.deviceCode || 'N/A')}</span>
+      ),
+    },
+    {
+      title: 'Giá trị',
+      dataIndex: 'value',
+      key: 'value',
+      width: 200,
+      render: (value, record) => {
+        if (!value) return <span>-</span>;
+        
+        // Xử lý đặc biệt cho loại AUTOMATION
+        if (record.type?.toUpperCase() === 'AUTOMATION') {
+          try {
+            const jsonValue = JSON.parse(value);
+            
+            // Tạo chuỗi hiển thị cho các ngày trong tuần
+            const formatDays = (days) => {
+              if (!days || !Array.isArray(days) || days.length === 0) return 'Không có';
+              
+              // Dịch tên các ngày sang tiếng Việt
+              const dayMap = {
+                'monday': 'Thứ 2',
+                'tuesday': 'Thứ 3',
+                'wednesday': 'Thứ 4',
+                'thursday': 'Thứ 5',
+                'friday': 'Thứ 6',
+                'saturday': 'Thứ 7',
+                'sunday': 'Chủ nhật'
+              };
+              
+              return days.map(day => dayMap[day] || day).join(', ');
+            };
+            
+            // Tạo nội dung hiển thị
+            const items = [];
+            
+            // Ngày trong tuần
+            if (jsonValue.days) {
+              items.push(`Ngày: ${formatDays(jsonValue.days)}`);
+            }
+            
+            // Thời gian bắt đầu
+            if (jsonValue.startTime) {
+              items.push(`Bắt đầu: ${jsonValue.startTime}`);
+            }
+            
+            // Thời gian kết thúc (với lịch trình lighting) hoặc thời lượng (với lịch trình watering)
+            if (jsonValue.endTime) {
+              items.push(`Kết thúc: ${jsonValue.endTime}`);
+            } else if (jsonValue.duration) {
+              items.push(`Thời lượng: ${jsonValue.duration} phút`);
+            }
+            
+            return (
+              <div className="flex flex-col">
+                {items.map((item, index) => (
+                  <div key={index} className="text-xs mb-1">{item}</div>
+                ))}
+              </div>
             );
+          } catch (e) {
+            // Nếu không phải JSON, hiển thị nguyên giá trị
+            return <span>{value}</span>;
+          }
         }
-
-        // 2. Lọc theo Loại sự kiện
-        if (typeFilter !== 'all') {
-            dataAfterFilter = dataAfterFilter.filter(item => (item.type || 'UNKNOWN') === typeFilter);
+        
+        // Xử lý các loại thông báo khác
+        try {
+          const jsonValue = JSON.parse(value);
+          
+          // Format the JSON string to display it nicely
+          if (typeof jsonValue === 'object') {
+            // Xử lý đặc biệt cho các trường hợp phổ biến
+            if ('status' in jsonValue) {
+              const status = typeof jsonValue.status === 'object' 
+                ? JSON.stringify(jsonValue.status) 
+                : String(jsonValue.status);
+              return <span>{status}</span>;
+            }
+            
+            if ('value' in jsonValue) {
+              const val = typeof jsonValue.value === 'object' 
+                ? JSON.stringify(jsonValue.value) 
+                : String(jsonValue.value);
+              return <span>{val}</span>;
+            }
+            
+            // Hiển thị các cặp key-value
+            const formatted = Object.entries(jsonValue)
+              .map(([key, val]) => {
+                const displayVal = typeof val === 'object' 
+                  ? JSON.stringify(val) 
+                  : String(val);
+                return `${key}: ${displayVal}`;
+              })
+              .join(', ');
+            
+            return <span>{formatted}</span>;
+          }
+          
+          // Với các giá trị không phải object
+          return <span>{String(jsonValue)}</span>;
+        } catch (e) {
+          // If not a JSON string, display the value directly
+          return <span>{value}</span>;
         }
+      },
+    },
+    {
+      title: 'Thời gian',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 180,
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      defaultSortOrder: 'descend',
+      render: (timestamp) => (
+        <Tooltip title={new Date(timestamp).toLocaleString()}>
+          {new Date(timestamp).toLocaleDateString() + ' ' + new Date(timestamp).toLocaleTimeString()}
+        </Tooltip>
+      ),
+    }
+  ];
 
-        // 3. Lọc theo Thời gian
-        const today = moment().endOf('day');
-        const yesterday = moment().subtract(1, 'days').startOf('day');
-        const sevenDaysAgo = moment().subtract(7, 'days').startOf('day');
+  return (
+    <div className="p-4 md:p-6 lg:p-8">
+      <h1 className="text-2xl md:text-3xl font-bold mb-8 text-center">
+        Thông báo của bạn
+      </h1>
 
-        if (timeFilter !== 'all') {
-            dataAfterFilter = dataAfterFilter.filter(item => {
-                const itemDate = moment(item.createdAt); // Giả sử API trả về 'createdAt'
-                if (!itemDate.isValid()) return false; // Bỏ qua nếu ngày không hợp lệ
-
-                switch (timeFilter) {
-                    case 'yesterday':
-                        return itemDate.isSame(yesterday, 'day');
-                    case 'last7days':
-                        return itemDate.isBetween(sevenDaysAgo, today, undefined, '[]'); // Bao gồm cả ngày bắt đầu và kết thúc
-                    case 'custom':
-                        if (customDateRange && customDateRange[0] && customDateRange[1]) {
-                            const startDate = customDateRange[0].startOf('day');
-                            const endDate = customDateRange[1].endOf('day');
-                            return itemDate.isBetween(startDate, endDate, undefined, '[]');
-                        }
-                        return true; // Không lọc nếu chưa chọn custom range
-                    default:
-                        return true; // Mặc định không lọc theo thời gian nếu là 'all'
-                }
-            });
-        }
-
-        setDisplayNotifications(dataAfterFilter);
-
-    }, [searchText, typeFilter, timeFilter, customDateRange, notifications]);
-
-
-    // --- Các hàm xử lý sự kiện cho Dropdowns ---
-    const handleTimeMenuClick = (e) => {
-        const key = e.key;
-        if (key === 'custom') {
-            setTimeFilter('custom'); // Đánh dấu để hiển thị RangePicker
-        } else {
-            setTimeFilter(key);
-            setCustomDateRange(null); // Reset custom range khi chọn cái khác
-        }
-    };
-
-    const handleTypeMenuClick = (e) => {
-        setTypeFilter(e.key);
-    };
-
-    const handleDateRangeChange = (dates) => {
-        setCustomDateRange(dates);
-        if(dates) {
-            setTimeFilter('custom'); // Đảm bảo filter đang là custom
-        } else if (timeFilter === 'custom') {
-             // Nếu xóa range mà đang ở custom thì quay về 'all'
-            setTimeFilter('all');
-        }
-    };
-
-    // --- Menu cho Dropdowns ---
-    const timeMenu = (
-        <Menu onClick={handleTimeMenuClick} selectedKeys={[timeFilter]}>
-            <Menu.Item key="all">All Time</Menu.Item>
-            <Menu.Item key="yesterday">Yesterday ({moment().subtract(1, 'days').format('DD/MM')})</Menu.Item>
-            <Menu.Item key="last7days">Last 7 days</Menu.Item>
-            <Menu.Divider />
-            <Menu.Item key="custom" disabled style={{ padding: 0, cursor: 'default' }}> {/* Cần style để không bị highlight */}
-                 <div style={{ padding: '5px 12px' }}> {/* Thêm padding để RangePicker không sát mép */}
-                    <RangePicker
-                        value={customDateRange}
-                        onChange={handleDateRangeChange}
-                        style={{ width: '100%' }}
-                        allowClear
-                    />
-                 </div>
-            </Menu.Item>
-        </Menu>
-    );
-
-    const typeMenu = (
-        <Menu onClick={handleTypeMenuClick} selectedKeys={[typeFilter]}>
-            {uniqueEventTypes.map(type => (
-                <Menu.Item key={type}>
-                    {type === 'all' ? 'All Types' : (type || 'UNKNOWN')}
-                </Menu.Item>
-            ))}
-        </Menu>
-    );
-    // --- Kết thúc phần Dropdowns ---
-
-
-    // --- Các hàm helper lấy Icon và Màu theo Type ---
-    const getTypeIcon = (type) => {
-        switch (type?.toUpperCase()) {
-            case 'THRESHOLD': return <ExclamationCircleOutlined style={{ color: '#f5222d' }} />;
-            case 'CONNECTION': return <ApiOutlined style={{ color: '#1890ff' }} />;
-            case 'PUMP': return <ToolOutlined style={{ color: '#52c41a' }} />;
-            case 'USER_ACTION': return <CheckCircleOutlined style={{ color: '#722ed1' }} />;
-            case 'AUTOMATION': return <ToolOutlined style={{ color: '#fa8c16' }} />;
-            default: return <InfoCircleOutlined style={{ color: '#bfbfbf' }} />;
-        }
-    };
-
-    const getTypeColor = (type) => {
-        switch (type?.toUpperCase()) {
-            case 'THRESHOLD': return 'error';
-            case 'CONNECTION': return 'processing';
-            case 'PUMP': return 'success';
-            case 'USER_ACTION': return 'purple';
-            case 'AUTOMATION': return 'warning';
-            default: return 'default';
-        }
-    };
-    // --- Kết thúc phần helpers ---
-
-
-    // --- Định nghĩa cột cho Table ---
-    const columns = [
-        {
-            title: 'Type',
-            dataIndex: 'type',
-            key: 'type',
-            width: 150,
-            render: (type) => (
-                <Tag icon={getTypeIcon(type)} color={getTypeColor(type)}>
-                    {type || 'UNKNOWN'}
-                </Tag>
-            ),
-        },
-        {
-            title: 'Content',
-            dataIndex: 'message',
-            key: 'message',
-            render: (text) => <Text>{text}</Text>,
-        },
-        {
-            title: 'Device/Source',
-            dataIndex: 'source', // Trường này có thể có hoặc không từ API
-            key: 'source',
-            width: 180,
-            render: (source, record) => (
-                // Ưu tiên hiển thị 'source', nếu không có thì hiển thị 'iotdevice.deviceCode'
-                <span>{source || (record.iotdevice?.deviceCode || 'N/A')}</span>
-            ),
-        },
-        {
-            title: 'Details/Value',
-            dataIndex: 'value', // Trường này chứa nhiều loại dữ liệu (string, JSON string)
-            key: 'value',
-            width: 200,
-            render: (value, record) => {
-                // Trả về '-' nếu không có giá trị
-                if (value === null || value === undefined || value === '') return <span>-</span>;
-
-                // Xử lý đặc biệt cho type 'AUTOMATION' (thường là JSON)
-                if (record.type?.toUpperCase() === 'AUTOMATION') {
-                    try {
-                        const jsonValue = JSON.parse(value);
-                        // Hàm format ngày (ví dụ)
-                        const formatDays = (days) => {
-                            if (!days || !Array.isArray(days) || days.length === 0) return 'None';
-                            const dayMap = { 'monday': 'Mon', 'tuesday': 'Tue', 'wednesday': 'Wed', 'thursday': 'Thu', 'friday': 'Fri', 'saturday': 'Sat', 'sunday': 'Sun' };
-                            return days.map(day => dayMap[day.toLowerCase()] || day).join(', ');
-                        };
-                        // Tạo mảng các thông tin cần hiển thị
-                        const items = [];
-                        if (jsonValue.days) items.push(`Days: ${formatDays(jsonValue.days)}`);
-                        if (jsonValue.startTime) items.push(`Start: ${jsonValue.startTime}`);
-                        if (jsonValue.endTime) items.push(`End: ${jsonValue.endTime}`);
-                        else if (jsonValue.duration) items.push(`Duration: ${jsonValue.duration} min`);
-                        // Render các thông tin này
-                        return (<div className="flex flex-col">{items.map((item, index) => (<div key={index} className="text-xs mb-1">{item}</div>))}</div>);
-                    } catch (e) {
-                        // Nếu không parse được JSON, hiển thị giá trị gốc
-                        return <span>{value}</span>;
-                    }
-                }
-
-                // Xử lý cho các loại khác, thử parse JSON nếu có thể
-                try {
-                    const jsonValue = JSON.parse(value);
-                    // Nếu parse thành công và là object, hiển thị các cặp key-value hoặc giá trị đặc biệt
-                    if (typeof jsonValue === 'object' && jsonValue !== null) {
-                        if ('status' in jsonValue) return <span>{String(jsonValue.status)}</span>;
-                        if ('value' in jsonValue) return <span>{String(jsonValue.value)}</span>;
-                        const formatted = Object.entries(jsonValue).map(([key, val]) => `${key}: ${String(val)}`).join(', ');
-                        return <span>{formatted || '-'}</span>; // Trả về '-' nếu object rỗng sau format
-                    }
-                    // Nếu parse thành công nhưng không phải object (vd: số, boolean), hiển thị dạng string
-                    return <span>{String(jsonValue)}</span>;
-                } catch (e) {
-                    // Nếu không phải JSON string, hiển thị giá trị gốc
-                    return <span>{value}</span>;
-                }
-            },
-        },
-        {
-            title: 'Time',
-            dataIndex: 'createdAt', // Dữ liệu thời gian từ API
-            key: 'createdAt',
-            width: 180,
-            sorter: (a, b) => moment(a.createdAt).valueOf() - moment(b.createdAt).valueOf(), // Sắp xếp theo thời gian
-            defaultSortOrder: 'descend', // Mặc định mới nhất lên trên
-            render: (timestamp) => ( // Format thời gian hiển thị và thêm Tooltip
-                <Tooltip title={moment(timestamp).format('YYYY-MM-DD HH:mm:ss')}>
-                    {moment(timestamp).format('DD/MM/YYYY HH:mm')}
-                </Tooltip>
-            ),
-        }
-    ];
-    // --- Kết thúc định nghĩa cột ---
-
-
-    // --- JSX Render ---
-    return (
-        <div className="notification-page-container">
-            <div className="notification-header">
-                <img src={Noficationbg} alt="Notification background" className="notification-header-bg"/>
-                <div className="notification-header-content">
-                    <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>Notifications History</Title>
-                    <Paragraph style={{ color: 'rgba(255, 255, 255, 0.85)', maxWidth: 600 }}>
-                        Review your past notifications to stay updated on important alerts and system activities.
-                    </Paragraph>
-                </div>
-            </div>
-
-            <div className="notification-body-content">
-                {/* Hàng Search và Filter */}
-                <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 24 }}>
-                    <Col flex="auto">
-                        <Input
-                            placeholder="Search across all fields..."
-                            prefix={<SearchOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
-                            value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
-                            allowClear
-                            style={{ borderRadius: 6 }}
-                            size="large"
-                        />
-                    </Col>
-                    <Col>
-                        <Space>
-                            {/* Dropdown Thời gian */}
-                            <Dropdown overlay={timeMenu} trigger={['click']}>
-                                <Button>
-                                    <ClockCircleOutlined /> {
-                                        timeFilter === 'all' ? 'Time' :
-                                        timeFilter === 'yesterday' ? 'Yesterday' :
-                                        timeFilter === 'last7days' ? 'Last 7 days' :
-                                        customDateRange ? `${customDateRange[0].format('DD/MM')} - ${customDateRange[1].format('DD/MM')}` : 'Custom Range'
-                                    } <DownOutlined />
-                                </Button>
-                            </Dropdown>
-                            {/* Dropdown Loại sự kiện */}
-                            <Dropdown overlay={typeMenu} trigger={['click']}>
-                                <Button>
-                                    <UnorderedListOutlined /> {typeFilter === 'all' ? 'Event Type' : (typeFilter || 'UNKNOWN')} <DownOutlined />
-                                </Button>
-                            </Dropdown>
-                        </Space>
-                    </Col>
-                </Row>
-
-                {/* Bảng dữ liệu */}
-                {loading ? (
-                    <div className="flex justify-center my-10">
-                        <Spin size="large" />
-                    </div>
-                 ) : (
-                     <div className="notification-table-wrapper">
-                         <Table
-                            columns={columns}
-                            dataSource={displayNotifications}
-                            rowKey="id"
-                            pagination={{ pageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'], position: ["bottomCenter"] }}
-                            loading={loading}
-                            scroll={{ x: 800 }} // Đảm bảo scroll ngang hoạt động
-                            locale={{
-                                // Có thể tùy chỉnh thêm text ở đây nếu cần
-                                emptyText: <Empty description={
-                                    searchText || typeFilter !== 'all' || timeFilter !== 'all'
-                                    ? "No notifications match the current filters."
-                                    : "No notifications available."
-                                } />
-                            }}
-                         />
-                     </div>
-                 )}
-            </div>
+      {loading ? (
+        <div className="flex justify-center my-10">
+          <Spin size="large" />
         </div>
-    );
-    // --- Kết thúc JSX Render ---
+      ) : (
+        <div className="bg-white rounded-lg shadow-md overflow-x-auto">
+          <Table
+            columns={columns}
+            dataSource={notifications}
+            rowKey="id"
+            pagination={false} // Tắt phân trang
+            loading={loading}
+            onChange={handleTableChange}
+            scroll={notifications && notifications.length > 0 ? { x: 800, y: 600 } : { x: 800 }} // Chỉ scroll theo chiều dọc khi có dữ liệu
+            locale={{ 
+              filterConfirm: 'Lọc',
+              filterReset: 'Đặt lại',
+              emptyText: (
+                <div className="py-16 flex flex-col items-center">
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description={
+                      filters && Object.values(filters).some(val => val && val.length > 0)
+                        ? "Không có thông báo nào phù hợp với bộ lọc. Hãy thử bộ lọc khác."
+                        : "Không có thông báo nào."
+                    }
+                  />
+                  {filters && Object.values(filters).some(val => val && val.length > 0) && (
+                    <Button 
+                      type="primary" 
+                      className="mt-4"
+                      onClick={() => {
+                        setFilters(null);
+                        fetchNotifications(null);
+                      }}
+                    >
+                      Xóa bộ lọc
+                    </Button>
+                  )}
+                </div>
+              )
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
 };
 
-export default Notification;
+export default Notification; 

@@ -193,7 +193,7 @@ const DeviceServices = {
       }
 
       // Log full URL for debugging
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const API_URL = import.meta.env.VITE_API_URL;
       const fullUrl = `${API_URL}/api/devices/${deviceId}/soil-moisture`;
       console.log('Full API URL:', fullUrl);
       
@@ -291,7 +291,7 @@ const DeviceServices = {
       }
 
       // Log full URL for debugging
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const API_URL = import.meta.env.VITE_API_URL;
       const fullUrl = `${API_URL}/api/devices/${deviceId}/pump-water`;
       console.log('Full API URL:', fullUrl);
       
@@ -412,6 +412,72 @@ const DeviceServices = {
       };
     } catch (error) {
       console.error('Error updating device:', error);
+      let errorMessage = 'Lỗi kết nối đến máy chủ';
+
+      if (error.response) {
+        errorMessage = error.response.data.message || `Lỗi: ${error.response.status}`;
+      }
+
+      return {
+        success: false,
+        message: errorMessage
+      };
+    }
+  },
+
+  // Kích hoạt thiết bị (kết nối MQTT) sau khi tạo mới
+  activateDevice: async (deviceId) => {
+    try {
+      console.log('Activating device:', deviceId);
+      const response = await axios.post(`/devices/${deviceId}/activate`);
+      console.log('Device activation response:', response.data);
+
+      if (response.data && response.data.success) {
+        return {
+          success: true,
+          message: response.data.message || 'Kích hoạt thiết bị thành công'
+        };
+      }
+
+      return {
+        success: false,
+        message: response.data.message || 'Kích hoạt thiết bị không thành công'
+      };
+    } catch (error) {
+      console.error('Error activating device:', error);
+      let errorMessage = 'Lỗi kết nối đến máy chủ';
+
+      if (error.response) {
+        errorMessage = error.response.data.message || `Lỗi: ${error.response.status}`;
+      }
+
+      return {
+        success: false,
+        message: errorMessage
+      };
+    }
+  },
+
+  // Xóa thiết bị
+  deleteDevice: async (deviceId) => {
+    try {
+      console.log('Deleting device:', deviceId);
+      const response = await axios.delete(`/devices/${deviceId}`);
+      console.log('Delete device response:', response.data);
+
+      if (response.data && response.data.success) {
+        return {
+          success: true,
+          message: response.data.message || 'Xóa thiết bị thành công'
+        };
+      }
+
+      return {
+        success: false,
+        message: response.data.message || 'Lỗi khi xóa thiết bị'
+      };
+    } catch (error) {
+      console.error('Error deleting device:', error);
       let errorMessage = 'Lỗi kết nối đến máy chủ';
 
       if (error.response) {
