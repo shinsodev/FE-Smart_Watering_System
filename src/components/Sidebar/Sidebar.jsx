@@ -98,11 +98,11 @@ const Sidebar = () => {
                   className={({ isActive }) => getNavLinkClass(isActive)}
                 >
                   <IoBarChartOutline className="text-xl" />
-                  <div>Biểu đồ & Báo cáo</div>
+                  <div>Chart & Report</div>
                 </NavLink>
               </>
             )}
-            
+
             {/* Admin Menu Items - Only visible for admin users */}
             {adminUser && (
               <div className="w-full">
