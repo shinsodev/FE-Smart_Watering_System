@@ -274,6 +274,7 @@ export const SensorProvider = ({ children }) => {
   const [thresholdAlerts, setThresholdAlerts] = useState(
     getSavedThresholdAlerts()
   );
+  const [deviceTriggers, setDeviceTriggers] = useState([]);
   const [thresholdConfig, setThresholdConfig] = useState({
     soilMoisture: { min: 20, max: 80 }, // Ngưỡng mặc định hợp lý
     temperature: { min: 18, max: 32 },
